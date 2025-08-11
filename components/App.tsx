@@ -1,8 +1,10 @@
 
 "use client";
 import React, {useEffect, useMemo, useRef, useState} from "react";
+import MiniInvoicePreview from "@/components/MiniInvoicePreview";
+import { InvoiceDocByTemplate, DEFAULT_SAMPLE, TEMPLATES, uid, currency, calcTotals, Divider } from "@/components/invoice-core";
 
-/* UI */
+/* UI primitives */
 const Container = ({className="", children}: any) => <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 ${className}`}>{children}</div>;
 const Card = ({className="", children}: any) => <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>{children}</div>;
 const CardHeader = ({title, subtitle, right, className=""}: any) => (
@@ -20,7 +22,6 @@ const Input = ({className="", ...p}: any) => <input className={`w-full rounded-x
 const Select=({className="", children, ...p}: any)=><select className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 ${className}`} {...p}>{children}</select>;
 const Textarea=({className="", ...p}: any)=><textarea className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 ${className}`} {...p}/>;
 const Badge = ({children, className=""}: any)=><span className={`inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 ${className}`}>{children}</span>;
-const Divider = ()=><div className="h-px w-full bg-slate-200" />;
 const Modal=({open,onClose,title,children,wide=false}:any)=>!open?null:(
   <div className="fixed inset-0 z-50 flex items-center justify-center">
     <div className="absolute inset-0 bg-slate-900/50" onClick={onClose}/>
@@ -36,9 +37,7 @@ const Modal=({open,onClose,title,children,wide=false}:any)=>!open?null:(
   </div>
 );
 
-/* Utils + store */
-const uid = () => Math.random().toString(36).slice(2);
-const currency = (n:any)=> new Intl.NumberFormat("es-ES",{style:"currency",currency:"EUR"}).format(Number(n||0));
+/* store + auth */
 const LS_KEY="invoice_saas_v7";
 const getStore=():any=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||"{}")}catch{return{}}};
 const setStore=(o:any)=>localStorage.setItem(LS_KEY, JSON.stringify(o));
@@ -53,38 +52,11 @@ function useAuth(){
   return {user,signup,login,logout,getUserData,setUserData};
 }
 
-/* Templates */
-const TEMPLATES=[
-  {id:"minimal",name:"Minimal",style:"bg-slate-900",colors:["#0f172a","#1f2937","#334155"],vibe:"Sobrio"},
-  {id:"classic",name:"Clásica",style:"bg-indigo-600",colors:["#4338ca","#3730a3","#312e81"],vibe:"Formal"},
-  {id:"modern",name:"Moderna",style:"bg-emerald-600",colors:["#059669","#047857","#065f46"],vibe:"Actual"},
-  {id:"elegant",name:"Elegante",style:"bg-rose-600",colors:["#e11d48","#be123c","#9f1239"],vibe:"Premium"},
-  {id:"tech",name:"Tech",style:"bg-cyan-600",colors:["#0891b2","#0e7490","#155e75"],vibe:"Start-up"},
-  {id:"bold",name:"Bold",style:"bg-amber-500",colors:["#f59e0b","#d97706","#b45309"],vibe:"Destacado"},
-  {id:"mono",name:"Monocromo",style:"bg-neutral-800",colors:["#0a0a0a","#262626","#525252"],vibe:"Minimal extremo"},
-  {id:"art",name:"Artístico",style:"bg-fuchsia-600",colors:["#c026d3","#a21caf","#86198f"],vibe:"Creativo"},
-  {id:"paper",name:"Papel",style:"bg-lime-600",colors:["#65a30d","#4d7c0f","#3f6212"],vibe:"Clásico moderno"},
-  {id:"blueprint",name:"Blueprint",style:"bg-blue-700",colors:["#1d4ed8","#1e40af","#1e3a8a"],vibe:"Ingeniería"},
-];
-const DEFAULT_SAMPLE:any={
-  number:"0001",
-  date:new Date().toISOString().slice(0,10),
-  dueDate:new Date(Date.now()+7*864e5).toISOString().slice(0,10),
-  purchaseOrder:"PO-2025-001",
-  paymentMethod:"Transferencia",
-  bankIban:"ES12 3456 7890 1234 5678 9012",
-  issuer:{name:"Tu Empresa S.L.",nif:"B12345678",address:"Calle Mayor 1, Madrid",email:"facturas@empresa.com",phone:"+34 600 000 000"},
-  client:{name:"Cliente Demo",nif:"00000000A",address:"C/ Falsa 123, Barcelona",email:"cliente@demo.com"},
-  items:[{id:uid(),description:"Servicio profesional",qty:1,price:300},{id:uid(),description:"Soporte",qty:2,price:50}],
-  notes:"Gracias por su confianza.",terms:"Pago a 7 días. Recargo por demora 1%.",
-  logo:"/logo.png", color:TEMPLATES[0].colors[0], discount:{mode:"percent",value:0}, taxRate:21, templateId:"minimal",
-};
-
 /* Header */
 function Header({onGoto,user,onOpenContact}:any){
   return (<header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-200">
     <Container><div className="flex h-16 items-center justify-between">
-      <div className="flex items-center gap-3"><img src="/logo.png" className="h-9 w-9 rounded-lg" alt="logo"/><span className="hidden text-sm font-semibold text-slate-900 sm:block">Facturakit</span></div>
+      <div className="flex items-center gap-3"><img src="/logo.svg" className="h-9 w-9 rounded-lg" alt="logo"/><span className="hidden text-sm font-semibold text-slate-900 sm:block">Facturakit</span></div>
       <nav className="flex items-center gap-2">
         <Button variant="ghost" onClick={()=>onGoto("home")} className="hidden sm:inline-flex">Inicio</Button>
         <Button variant="ghost" onClick={()=>onGoto("templates")} className="hidden sm:inline-flex">Plantillas</Button>
@@ -95,94 +67,142 @@ function Header({onGoto,user,onOpenContact}:any){
   </header>);
 }
 
-/* Home */
-function Home({onGoto}:any){
-  return (<>
-    <section className="bg-gradient-to-b from-slate-50 to-white">
-      <Container className="py-20 sm:py-28">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <div>
-            <Badge>Nuevo • V7.3</Badge>
-            <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">Crea facturas profesionales en minutos</h1>
-            <p className="mt-4 text-lg text-slate-600">Elige entre <span className="font-semibold">10 plantillas únicas</span>, personaliza y descarga en <span className="font-semibold">PDF o HTML</span>. <span className="font-semibold">3 gratis</span>.</p>
-            <div className="mt-6 flex flex-wrap gap-3"><Button onClick={()=>onGoto("templates")} variant="success">Empezar ahora</Button><Button variant="secondary" onClick={()=>onGoto("templates")}>Ver plantillas</Button></div>
+/* ---------- Home (completa) ---------- */
+function Home({ onGoto }: any) {
+  return (
+    <>
+      {/* HERO */}
+      <section className="bg-gradient-to-b from-slate-50 to-white">
+        <Container className="py-20 sm:py-28">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <img src="/logo.svg" alt="Facturakit" className="h-8 w-8 rounded-md"/>
+                <Badge>V7.4.1</Badge>
+              </div>
+              <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+                Facturas bonitas y profesionales en 2 minutos
+              </h1>
+              <p className="mt-4 text-lg text-slate-600">
+                10 plantillas con diseño real, editor completo y exportación a <b>PDF</b> o <b>HTML</b>. Las <b>3 primeras</b> son gratis.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button onClick={() => onGoto("templates")} variant="success">Crear factura ahora</Button>
+                <Button variant="secondary" onClick={() => onGoto("templates")}>Ver plantillas</Button>
+              </div>
+              <div className="mt-6 flex items-center gap-4 text-sm text-slate-600">
+                <div className="flex -space-x-2">
+                  {["Ana", "Carlos", "María", "Jorge"].map((n) => (
+                    <div key={n} className="h-8 w-8 rounded-full ring-2 ring-white bg-slate-200 grid place-items-center text-xs font-semibold text-slate-700">
+                      {n.slice(0,1)}
+                    </div>
+                  ))}
+                </div>
+                <span>+1.200 usuarios activos</span>
+              </div>
+            </div>
+            <div className="relative">
+              <img src="/hero-invoice.svg" alt="Ejemplo de factura" className="w-full rounded-2xl border border-slate-200 shadow-sm"/>
+              <div className="absolute -bottom-4 -left-4 hidden sm:block rounded-xl bg-white p-2 shadow-md">
+                <MiniInvoicePreview templateId="elegant" />
+              </div>
+            </div>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><TemplatesStrip/><p className="mt-3 text-center text-xs text-slate-500">10 estilos listos para usar</p></div>
-        </div>
-      </Container>
-    </section>
-    <section><Container className="py-14"><div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {[{t:"Plantillas únicas",d:"Minimal, clásica, moderna, artística y más."},{t:"Editor completo",d:"Logo, colores, descuentos %/€ y vista previa."},{t:"Exportar en 1 clic",d:"PDF (print) o HTML listos para enviar."},{t:"Panel de control",d:"Edita, renombra, elimina y gestiona."}].map(f=>(<Card key={f.t}><CardBody><h3 className="text-base font-semibold text-slate-900">{f.t}</h3><p className="mt-1 text-sm text-slate-600">{f.d}</p></CardBody></Card>))}
-    </div></Container></section>
-    <section className="bg-slate-50"><Container className="py-16"><h2 className="text-center text-2xl font-bold">Cómo funciona</h2>
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">{["Elige la plantilla","Rellena tus datos","Descarga la factura"].map((s,i)=>(<Card key={s}><CardBody><div className="flex items-center gap-3"><div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-900 text-white">{i+1}</div><h3 className="text-base font-semibold">{s}</h3></div><p className="mt-2 text-sm text-slate-600">{i===0?"10 estilos con mini‑previews reales.":i===1?"Logo, colores, conceptos, impuestos, descuentos.":"PDF o HTML listos para enviar."}</p></CardBody></Card>))}</div>
-      <div className="mt-8 text-center"><Button onClick={()=>onGoto("templates")}>Probar ahora</Button></div></Container></section>
-  </>);
-}
-const TemplatesStrip=()=> (<div className="grid grid-cols-5 gap-2">{TEMPLATES.slice(0,10).map(t=>(<div key={t.id} className={`h-20 rounded-xl ${t.style} text-white grid place-items-center text-xs font-semibold`}>{t.name}</div>))}</div>);
+        </Container>
+      </section>
 
-/* --- Blocks for invoice variants --- */
-const calcTotals=(items:any[],discount:any={mode:"percent",value:0},taxRate=21)=>{const subtotal=items.reduce((s,it)=>s+Number(it.qty||0)*Number(it.price||0),0);const discountValue=discount.mode==="percent"?(subtotal*(discount.value||0))/100:(discount.value||0);const base=Math.max(0, subtotal-discountValue);const taxes=(base*Number(taxRate||0))/100;return {subtotal,discount:discountValue,base,taxes,total:base+taxes};};
-function HeaderBlock({invoice,accent,variant="chip",mono=false}:any){
-  return (<div className={`flex items-start justify-between gap-6 ${variant==="band"?"rounded-lg p-3 text-white":""}`} style={variant==="band"?{background:accent.color}:{}}>
-    <div>{variant!=="big"&&variant!=="band"&&(<div className={`inline-block rounded-full px-2 py-0.5 text-xs ${mono?"text-white bg-black":"text-white"}`} style={variant==="chip"?{background:accent.color}:{}}>Factura</div>)}
-      <h2 className={`mt-2 font-bold ${variant==="big"?"text-3xl":"text-xl"}`}>#{invoice.number}</h2>
-      <p className={`text-sm ${mono?"text-neutral-600":"text-slate-600"}`}>Fecha: {invoice.date} · Vencimiento: {invoice.dueDate}</p></div>
-    <div className="text-right">{invoice.logo && <img src={invoice.logo} alt="logo" className="ml-auto mb-2 h-10 object-contain"/>}<h3 className={`text-sm font-semibold ${mono?"text-neutral-900":"text-slate-900"}`}>{invoice.issuer?.name}</h3><p className={`text-xs ${mono?"text-neutral-600":"text-slate-600"}`}>{invoice.issuer?.nif}</p></div>
-  </div>);
-}
-function TwoCols({invoice,subtle=false,inverted=false,mono=false}:any){
-  return (<div className="mt-4 grid gap-2 text-sm md:grid-cols-2">
-    <div className={`${subtle?"rounded-lg bg-slate-50 p-3":""} ${mono?"text-neutral-700":""}`}><p className={`font-semibold ${mono?"text-neutral-900":"text-slate-900"}`}>Facturar a</p><p className="text-slate-700">{invoice.client?.name}</p><p className="text-slate-500">{invoice.client?.nif}</p></div>
-    <div className={`${inverted?"rounded-lg text-white p-3":""}`} style={inverted?{background:"#0ea5b7"}:{}}><p className={`font-semibold ${inverted?"text-white":"text-slate-900"}`}>Pago</p><p className={`${inverted?"text-white/90":"text-slate-700"}`}>{invoice.paymentMethod}</p><p className={`${inverted?"text-white/80":"text-slate-500"}`}>{invoice.bankIban}</p></div>
-  </div>);
-}
-function ItemsTable({items,totals,taxRate,accent,variant="simple",compact=false}:any){
-  const th=variant==="mono"?'text-neutral-700':'text-slate-600'; const tableCls=variant==="bordered"?'border border-slate-200':variant==="thick"?'border-t-2 border-b-2 border-slate-900':'';
-  return (<div className={`mt-4 overflow-x-auto ${compact?"text-[12px]":""}`}>
-    <table className={`min-w-full ${tableCls}`}><thead><tr className={th}><th className="w-2/3">Descripción</th><th>Cant.</th><th>Precio</th><th>Importe</th></tr></thead>
-      <tbody>{items.map((it:any,i:number)=>(<tr key={i} className={variant==="striped"&&i%2?'bg-slate-50':''}><td>{it.description}</td><td>{it.qty}</td><td>{currency(it.price)}</td><td>{currency(Number(it.qty)*Number(it.price))}</td></tr>))}</tbody>
-    </table>
-    <div className="mt-4 ml-auto w-full max-w-xs text-sm">
-      <div className="flex justify-between"><span className="text-slate-600">Subtotal</span><span className="font-medium">{currency(totals.subtotal)}</span></div>
-      <div className="flex justify-between"><span className="text-slate-600">Descuento</span><span className="font-medium">-{currency(totals.discount)}</span></div>
-      <div className="flex justify-between"><span className="text-slate-600">Base</span><span className="font-medium">{currency(totals.base)}</span></div>
-      <div className="flex justify-between"><span className="text-slate-600">IVA ({taxRate}%)</span><span className="font-medium">{currency(totals.taxes)}</span></div>
-      <Divider/><div className="flex justify-between text-base font-semibold"><span>Total</span><span style={{color:accent.color}}>{currency(totals.total)}</span></div>
-    </div>
-  </div>);
-}
-function NotesTerms({invoice}:any){ return (invoice.notes||invoice.terms)?(<div className="mt-4 grid gap-4 text-xs md:grid-cols-2">
-  {invoice.notes && <div><p className="font-semibold text-slate-900">Notas</p><p className="text-slate-700 whitespace-pre-wrap">{invoice.notes}</p></div>}
-  {invoice.terms && <div><p className="font-semibold text-slate-900">Términos</p><p className="text-slate-700 whitespace-pre-wrap">{invoice.terms}</p></div>}
-</div>):null; }
+      {/* BENEFICIOS */}
+      <section className="bg-white">
+        <Container className="py-16">
+          <h2 className="text-center text-2xl font-bold">Todo lo que necesitas</h2>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { t: "Plantillas con diseño real", d: "Cada estilo modifica la estructura, no solo el color." },
+              { t: "Previsualización en vivo", d: "Ve la factura mientras rellenas los datos." },
+              { t: "Logo y paletas", d: "Sube tu logo y elige colores por plantilla." },
+              { t: "Descarga inmediata", d: "Exporta PDF (print) o HTML en 1 clic." },
+            ].map((f) => (
+              <Card key={f.t}><CardBody><h3 className="text-base font-semibold text-slate-900">{f.t}</h3><p className="mt-1 text-sm text-slate-600">{f.d}</p></CardBody></Card>
+            ))}
+          </div>
+        </Container>
+      </section>
 
-/* Full invoice by template */
-function InvoiceDocByTemplate({invoice, templateId, accentColor, compact=false}:any){
-  const items=invoice.items||[]; const totals=calcTotals(items, invoice.discount, invoice.taxRate); const accent={color: accentColor || invoice.color || "#0f172a"}; const scale=compact?"scale-75 origin-top":"scale-100";
-  return (<div className={`rounded-2xl border border-slate-200 bg-white p-4 ${compact?"h-48 overflow-hidden":"p-6"}`}>
-    {templateId==="classic" && (<><HeaderBlock invoice={invoice} accent={accent} variant="band"/><TwoCols invoice={invoice}/><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={accent} variant="bordered"/>{!compact && <NotesTerms invoice={invoice}/>}</>)}
-    {templateId==="modern" && (<div className={scale}><div className="flex items-start justify-between"><div><h2 className="text-xl font-bold">Factura #{invoice.number}</h2><p className="text-sm text-slate-600">{invoice.date} · Vence {invoice.dueDate}</p></div><div className="rounded-xl px-3 py-1 text-xs text-white" style={{background:accent.color}}>Total {currency(totals.total)}</div></div><div className="mt-3 grid gap-2 md:grid-cols-2"><div className="rounded-lg bg-slate-50 p-3"><p className="text-xs font-semibold">Cliente</p><p className="text-sm">{invoice.client?.name}</p></div><div className="rounded-lg bg-slate-50 p-3"><p className="text-xs font-semibold">Pago</p><p className="text-sm">{invoice.paymentMethod}</p></div></div><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={accent} variant="striped" compact={compact}/></div>)}
-    {templateId==="elegant" && (<div className={scale}><div className="flex items-start justify-between border-b border-slate-200 pb-3"><div><p className="text-sm font-semibold" style={{color:accent.color}}>FACTURA</p><h2 className="text-xl font-bold">{invoice.issuer?.name}</h2></div>{invoice.logo && <img src={invoice.logo} className="h-10 object-contain"/>}</div><TwoCols invoice={invoice} subtle/><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={accent} variant="clean" compact={compact}/></div>)}
-    {templateId==="tech" && (<div className={scale}><div className="rounded-lg p-3 text-white" style={{background:accent.color}}><div className="flex items-center justify-between"><b>Factura #{invoice.number}</b><span>{invoice.date}</span></div></div><TwoCols invoice={invoice} inverted/><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={accent} variant="grid" compact={compact}/></div>)}
-    {templateId==="bold" && (<div className={scale}><HeaderBlock invoice={invoice} accent={accent} variant="big"/><TwoCols invoice={invoice}/><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={accent} variant="thick" compact={compact}/></div>)}
-    {templateId==="mono" && (<div className={scale}><HeaderBlock invoice={invoice} accent={{color:"#111"}} mono/><TwoCols invoice={invoice} mono/><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={{color:"#111"}} variant="mono" compact={compact}/></div>)}
-    {templateId==="art" && (<div className={scale}><div className="flex gap-4"><div className="hidden w-2 rounded-lg sm:block" style={{background:accent.color}}/><div className="flex-1"><HeaderBlock invoice={invoice} accent={accent} variant="chip"/><TwoCols invoice={invoice}/><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={accent} variant="dotted" compact={compact}/></div></div></div>)}
-    {templateId==="paper" && (<div className={scale}><div className="rounded-lg border border-slate-300 p-3 shadow-[0_0_0_1px_rgba(0,0,0,0.02)]"><HeaderBlock invoice={invoice} accent={accent} variant="chip"/><TwoCols invoice={invoice}/><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={accent} variant="bordered" compact={compact}/></div></div>)}
-    {templateId==="blueprint" && (<div className={scale}><div className="rounded-lg border border-blue-200 bg-blue-50 p-3"><HeaderBlock invoice={invoice} accent={{color:"#1d4ed8"}} variant="band"/><TwoCols invoice={invoice} subtle/><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={{color:"#1d4ed8"}} variant="grid" compact={compact}/></div></div>)}
-    {templateId==="minimal" && (<div className={scale}><HeaderBlock invoice={invoice} accent={accent} variant="chip"/><TwoCols invoice={invoice}/><ItemsTable items={items} totals={totals} taxRate={invoice.taxRate} accent={accent} variant="simple" compact={compact}/></div>)}
-  </div>);
-}
+      {/* PLANTILLAS */}
+      <section className="bg-slate-50">
+        <Container className="py-16">
+          <div className="flex items-end justify-between">
+            <h2 className="text-2xl font-bold">Plantillas populares</h2>
+            <Button variant="ghost" onClick={() => onGoto("templates")}>Ver todas</Button>
+          </div>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {["minimal","classic","modern","elegant"].map(id => (
+              <Card key={id}>
+                <CardBody>
+                  <MiniInvoicePreview templateId={id}/>
+                  <p className="mt-3 text-sm font-semibold capitalize">{id}</p>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </section>
 
-/* Mini preview BEFORE Templates usage */
-function MiniInvoicePreview({templateId}:{templateId:string}){
-  const invoice={...DEFAULT_SAMPLE, number:"0007", client:{name:"Cliente Demo"}, templateId};
-  const color=TEMPLATES.find(t=>t.id===templateId)?.colors[0];
-  return (<div className="rounded-xl border border-slate-200 bg-white p-2">
-    <div className="h-40 overflow-hidden rounded-lg bg-white"><div className="scale-[0.7] origin-top-left min-w-[640px]">
-      <InvoiceDocByTemplate invoice={invoice} templateId={templateId} accentColor={color} compact/>
-    </div></div>
-  </div>);
+      {/* PASOS */}
+      <section>
+        <Container className="py-16">
+          <h2 className="text-center text-2xl font-bold">Cómo funciona</h2>
+          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            {["Elige plantilla", "Rellena datos", "Descarga"].map((s, i) => (
+              <Card key={s}><CardBody>
+                <div className="flex items-center gap-3">
+                  <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-900 text-white">{i + 1}</div>
+                  <h3 className="text-base font-semibold text-slate-900">{s}</h3>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">
+                  {i === 0 ? "10 estilos con mini‑previews reales."
+                   : i === 1 ? "Logo, colores, conceptos, impuestos y descuentos."
+                   : "PDF o HTML listos para enviar."}
+                </p>
+              </CardBody></Card>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* TESTIMONIOS */}
+      <section className="bg-white">
+        <Container className="py-16">
+          <h2 className="text-center text-2xl font-bold">Opiniones</h2>
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            {[{ n: "Ana López", t: "Diseñadora", m: "Se ve profesional y es súper rápido." },
+              { n: "Diego Martín", t: "Autónomo", m: "Me ahorra tiempo cada mes." },
+              { n: "Laura Pérez", t: "Consultora", m: "Las plantillas tienen mucho nivel." }].map((r) => (
+              <Card key={r.n}><CardBody>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-slate-200 grid place-items-center font-semibold text-slate-700">
+                    {r.n.split(" ").map(p => p[0]).join("")}
+                  </div>
+                  <div><p className="text-sm font-semibold text-slate-900">{r.n}</p><p className="text-xs text-slate-500">{r.t}</p></div>
+                </div>
+                <div className="mt-3 flex items-center gap-1 text-amber-500">{Array.from({length:5}).map((_,i)=>(<span key={i}>★</span>))}</div>
+                <p className="mt-2 text-sm text-slate-700">“{r.m}”</p>
+              </CardBody></Card>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* CTA FINAL */}
+      <section className="bg-slate-900">
+        <Container className="py-14 text-center">
+          <h3 className="text-2xl font-bold text-white">Crea tu primera factura gratis</h3>
+          <p className="mt-2 text-slate-300">Sin tarjetas ni complicaciones: 3 descargas gratuitas.</p>
+          <Button className="mt-4" onClick={() => onGoto("templates")}>Empezar</Button>
+        </Container>
+      </section>
+    </>
+  );
 }
 
 /* Templates list */
@@ -305,11 +325,11 @@ function Dashboard({auth,onOpenContact,onGotoBuilder,onRename}:any){
 const TabBtn=({active,children,...p}:any)=><button className={`rounded-xl px-3 py-2 text-sm font-medium ${active?"bg-slate-900 text-white":"text-slate-700 hover:bg-slate-100"}`} {...p}>{children}</button>;
 const EmptyInvoices=({onCreate}:any)=>(<div className="grid place-items-center rounded-2xl border border-dashed border-slate-300 p-12 text-center"><div className="mx-auto max-w-md"><h4 className="text-lg font-semibold text-slate-900">Aún no tienes facturas</h4><p className="mt-2 text-slate-600">Crea tu primera factura con una plantilla profesional.</p><Button className="mt-4" onClick={onCreate}>Crear factura</Button></div></div>);
 
-/* Help, account, contact & footer (same as before) */
+/* Help & Account */
 function HelpPlans({auth}:any){
   const data=auth.getUserData(); const plan=data?.plan||{name:"free",remaining:3,max:3}; const setPlan=(p:any)=>auth.setUserData((d:any)=>({...d,plan:p}));
   return (<CardBody className="space-y-6"><div className="grid gap-4 md:grid-cols-2">
-    <FaqItem q="¿Cómo descargo mi factura?" a="Pulsa Visualizar y usa el botón Exportar PDF o Descarga HTML dentro del modal."/>
+    <FaqItem q="¿Cómo descargo mi factura?" a="Pulsa Visualizar y usa Exportar PDF (print) o Descarga HTML."/>
     <FaqItem q="¿Puedo cambiar de plantilla?" a="Sí, en el editor selecciona otra plantilla y color."/>
     <FaqItem q="¿Cómo funcionan los planes?" a="Gratis 3 facturas. Trial 0,50€ 24h (hasta 5) y pasa a Premium si no cancelas. Premium 39,90€ (15 facturas). Enterprise 79,90€ ilimitadas."/>
     <FaqItem q="¿Puedo cancelar?" a="Sí, desde Cuenta › Desuscribirse."/>
@@ -329,15 +349,9 @@ function AccountSection({auth}:any){
   const deleteAccount=()=>{ if(!confirm("Si eliminas la cuenta se eliminarán todas tus facturas. ¿Confirmas?")) return; const s=getStore(); delete s.users[auth.user.email]; delete s.currentUser; setStore(s); location.reload();};
   return (<CardBody className="space-y-4"><div className="flex items-center justify-between rounded-xl border border-slate-200 p-4"><div><p className="text-sm font-semibold text-slate-900">Plan actual</p><p className="text-sm text-slate-600 uppercase">{data?.plan?.name}</p></div><Button variant="outline" onClick={unsubscribe}>Desuscribirse</Button></div><div className="rounded-xl border border-rose-200 bg-rose-50 p-4"><p className="text-sm font-semibold text-rose-900">Eliminar cuenta</p><p className="text-xs text-rose-800">Si eliminas tu cuenta se eliminarán todas las facturas.</p><Button className="mt-3" variant="danger" onClick={deleteAccount}>Eliminar cuenta</Button></div></CardBody>);
 }
-function ContactModal({open,onClose}:any){
-  const [name,setName]=useState(""); const [email,setEmail]=useState(""); const [msg,setMsg]=useState(""); const [sent,setSent]=useState(false);
-  const submit=(e:any)=>{e.preventDefault(); setSent(true); setTimeout(()=>onClose(),900);};
-  return (<Modal open={open} onClose={onClose} title="Contacto">{sent?(<div className="grid place-items-center p-10 text-center"><div className="mb-2 h-12 w-12 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center"><svg viewBox="0 0 24 24" className="h-6 w-6"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></div><p className="text-slate-800">¡Mensaje enviado! Te responderemos pronto.</p></div>):(<form onSubmit={submit} className="space-y-3"><div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-medium text-slate-600">Nombre</label><Input value={name} onChange={(e:any)=>setName(e.target.value)} required/></div><div><label className="text-xs font-medium text-slate-600">Correo</label><Input type="email" value={email} onChange={(e:any)=>setEmail(e.target.value)} required/></div></div><div><label className="text-xs font-medium text-slate-600">Mensaje</label><Textarea rows={5} value={msg} onChange={(e:any)=>setMsg(e.target.value)} required placeholder="Cuéntanos en qué podemos ayudarte"/></div><div className="flex justify-end gap-2"><Button variant="secondary" type="button" onClick={onClose}>Cerrar</Button><Button type="submit">Enviar</Button></div></form>)}</Modal>);
-}
-function Footer(){ return (<footer className="border-t border-slate-200 py-10"><Container><div className="flex flex-col items-center justify-between gap-4 sm:flex-row"><div className="flex items-center gap-3"><img src="/logo.png" className="h-6 w-6 rounded" alt="logo"/><p className="text-sm text-slate-600">© {new Date().getFullYear()} Facturakit. Todos los derechos reservados.</p></div><div className="flex items-center gap-4 text-sm"><a className="text-slate-600 hover:text-slate-900" href="#">Términos</a><a className="text-slate-600 hover:text-slate-900" href="#">Privacidad</a></div></div></Container></footer>);}
 function FaqItem({q,a}:any){ const [open,setOpen]=useState(false); return (<div className="rounded-xl border border-slate-200"><button className="flex w-full items-center justify-between p-4 text-left" onClick={()=>setOpen(!open)}><span className="font-medium text-slate-900">{q}</span><svg className={`h-5 w-5 text-slate-600 transition ${open?"rotate-180":""}`} viewBox="0 0 24 24"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg></button>{open && <div className="border-t border-slate-200 p-4 text-slate-700">{a}</div>}</div>);}
 
-/* Preview modal + print/export */
+/* Preview modal */
 const PRINT_STYLES=`@page{size:A4;margin:24mm}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#0f172a}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{text-align:left;padding:8px;border-bottom:1px solid #e2e8f0}`;
 function InvoicePreviewModal({open,onClose,invoice}:any){
   const ref=useRef<HTMLDivElement|null>(null);
@@ -351,11 +365,28 @@ function InvoicePreviewModal({open,onClose,invoice}:any){
   </Modal>);
 }
 
-/* App (routes) */
+/* Auth screen */
+function AuthScreen({mode="login", onSubmit, switchTo}:any){
+  const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [error,setError]=useState("");
+  const submit=(e:any)=>{e.preventDefault(); setError(""); try{onSubmit(email,password);}catch(err:any){setError(err.message||"Error");}};
+  return (<Container className="py-16"><div className="mx-auto max-w-md"><Card><CardHeader title={mode==="login"?"Entrar":"Crear cuenta"} subtitle="Correo y contraseña"/><CardBody>
+    <form onSubmit={submit} className="space-y-3"><div><label className="text-xs font-medium text-slate-600">Correo</label><Input type="email" value={email} onChange={(e:any)=>setEmail(e.target.value)} required/></div><div><label className="text-xs font-medium text-slate-600">Contraseña</label><Input type="password" value={password} onChange={(e:any)=>setPassword(e.target.value)} required/></div>{error && <p className="text-sm text-rose-600">{error}</p>}<Button className="w-full" type="submit">{mode==="login"?"Entrar":"Crear cuenta"}</Button></form>
+    <div className="mt-4 flex items-center justify-between gap-2"><button className="text-sm text-slate-700 underline" onClick={switchTo}>{mode==="login"?"Crear cuenta":"Ya tengo cuenta"}</button><Button variant="outline">Continuar con Google</Button></div>
+  </CardBody></Card></div></Container>);
+}
+
+/* Contact + Footer */
+function ContactModal({open,onClose}:any){
+  const [name,setName]=useState(""); const [email,setEmail]=useState(""); const [msg,setMsg]=useState(""); const [sent,setSent]=useState(false);
+  const submit=(e:any)=>{e.preventDefault(); setSent(true); setTimeout(()=>onClose(),900);};
+  return (<Modal open={open} onClose={onClose} title="Contacto">{sent?(<div className="grid place-items-center p-10 text-center"><div className="mb-2 h-12 w-12 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center"><svg viewBox="0 0 24 24" className="h-6 w-6"><path fill="currentColor" d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg></div><p className="text-slate-800">¡Mensaje enviado! Te responderemos pronto.</p></div>):(<form onSubmit={submit} className="space-y-3"><div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-medium text-slate-600">Nombre</label><Input value={name} onChange={(e:any)=>setName(e.target.value)} required/></div><div><label className="text-xs font-medium text-slate-600">Correo</label><Input type="email" value={email} onChange={(e:any)=>setEmail(e.target.value)} required/></div></div><div><label className="text-xs font-medium text-slate-600">Mensaje</label><Textarea rows={5} value={msg} onChange={(e:any)=>setMsg(e.target.value)} required placeholder="¿En qué podemos ayudarte?"/></div><div className="flex justify-end gap-2"><Button variant="secondary" type="button" onClick={onClose}>Cerrar</Button><Button type="submit">Enviar</Button></div></form>)}</Modal>);
+}
+function Footer(){ return (<footer className="border-t border-slate-200 py-10"><Container><div className="flex flex-col items-center justify-between gap-4 sm:flex-row"><div className="flex items-center gap-3"><img src="/logo.svg" className="h-6 w-6 rounded" alt="logo"/><p className="text-sm text-slate-600">© {new Date().getFullYear()} Facturakit. Todos los derechos reservados.</p></div><div className="flex items-center gap-4 text-sm"><a className="text-slate-600 hover:text-slate-900" href="#">Términos</a><a className="text-slate-600 hover:text-slate-900" href="#">Privacidad</a></div></div></Container></footer>);}
+
+/* App root (routes) */
 export default function App(){
   const auth=useAuth();
-  const [route,setRoute]=useState("home");
-  const [contactOpen,setContactOpen]=useState(false);
+  const [route,setRoute]=useState("home"); const [contactOpen,setContactOpen]=useState(false);
   const [templateModal,setTemplateModal]=useState<any>(null);
   const [pickedTemplate,setPickedTemplate]=useState<any>(null);
   const [builderInvoice,setBuilderInvoice]=useState<any>(null);
@@ -385,16 +416,5 @@ export default function App(){
       <div className="flex justify-end gap-2"><Button variant="secondary" onClick={()=>setSuccessModal(null)}>Cerrar</Button></div>
     </Modal>
     <ContactModal open={contactOpen} onClose={()=>setContactOpen(false)}/>
-    <div id="hidden-print" className="hidden"/>
   </div>);
-}
-
-/* Auth screen */
-function AuthScreen({mode="login", onSubmit, switchTo}:any){
-  const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [error,setError]=useState("");
-  const submit=(e:any)=>{e.preventDefault(); setError(""); try{onSubmit(email,password);}catch(err:any){setError(err.message||"Error");}};
-  return (<Container className="py-16"><div className="mx-auto max-w-md"><Card><CardHeader title={mode==="login"?"Entrar":"Crear cuenta"} subtitle="Correo y contraseña"/><CardBody>
-    <form onSubmit={submit} className="space-y-3"><div><label className="text-xs font-medium text-slate-600">Correo</label><Input type="email" value={email} onChange={(e:any)=>setEmail(e.target.value)} required/></div><div><label className="text-xs font-medium text-slate-600">Contraseña</label><Input type="password" value={password} onChange={(e:any)=>setPassword(e.target.value)} required/></div>{error && <p className="text-sm text-rose-600">{error}</p>}<Button className="w-full" type="submit">{mode==="login"?"Entrar":"Crear cuenta"}</Button></form>
-    <div className="mt-4 flex items-center justify-between gap-2"><button className="text-sm text-slate-700 underline" onClick={switchTo}>{mode==="login"?"Crear cuenta":"Ya tengo cuenta"}</button><Button variant="outline">Continuar con Google</Button></div>
-  </CardBody></Card></div></Container>);
 }
