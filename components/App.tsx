@@ -179,7 +179,7 @@ function MiniInvoicePreview({templateId}:{templateId:string}){
   const invoice={...DEFAULT_SAMPLE, number:"0007", client:{name:"Cliente Demo"}, templateId};
   const color=TEMPLATES.find(t=>t.id===templateId)?.colors[0];
   return (<div className="rounded-xl border border-slate-200 bg-white p-2">
-    <div className="h-32 overflow-hidden rounded-lg"><div className="scale-[0.55] origin-top-left min-w-[640px]">
+    <div className="h-40 overflow-hidden rounded-lg bg-white"><div className="scale-[0.7] origin-top-left min-w-[640px]">
       <InvoiceDocByTemplate invoice={invoice} templateId={templateId} accentColor={color} compact/>
     </div></div>
   </div>);
