@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" rx="16" fill="#0f172a"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-size="64" font-family="Inter,Arial" fill="#fff">F</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="24" fill="#0f172a"/>
+  <g transform="translate(24,24)">
+    <rect x="10" y="16" width="60" height="52" rx="8" fill="#ffffff"/>
+    <rect x="0" y="8" width="60" height="52" rx="8" fill="#22c55e" opacity="0.2"/>
+    <path d="M22 40 l8 8 l20 -20" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="64" y="118" font-family="system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="16" text-anchor="middle" fill="#fff">Facturakit</text>
+</svg>

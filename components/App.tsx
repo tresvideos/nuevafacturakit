@@ -1,15 +1,8 @@
+
 "use client";
 import React, {useEffect, useMemo, useRef, useState} from "react";
 import MiniInvoicePreview from "@/components/MiniInvoicePreview";
-import {
-  InvoiceDocByTemplate,
-  DEFAULT_SAMPLE,
-  TEMPLATES,
-  uid,
-  currency,
-  calcTotals,
-  Divider
-} from "@/components/invoice-core";
+import { InvoiceDocByTemplate, DEFAULT_SAMPLE, TEMPLATES, uid, currency, calcTotals, Divider } from "@/components/invoice-core";
 
 /* UI primitives */
 const Container = ({className="", children}: any) => <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 ${className}`}>{children}</div>;
@@ -22,14 +15,7 @@ const CardHeader = ({title, subtitle, right, className=""}: any) => (
 const CardBody = ({className="", children}: any) => <div className={`p-5 ${className}`}>{children}</div>;
 const Button = ({children, className="", variant="primary", ...p}: any) => {
   const base="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50";
-  const v:any={
-    primary:"bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900/20",
-    secondary:"bg-slate-100 text-slate-900 hover:bg-slate-200 focus:ring-slate-300",
-    ghost:"bg-transparent hover:bg-slate-100 text-slate-700 focus:ring-slate-300",
-    danger:"bg-rose-600 text-white hover:bg-rose-500 focus:ring-rose-600/20",
-    outline:"border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 focus:ring-slate-300",
-    success:"bg-emerald-600 text-white hover:bg-emerald-500 focus:ring-emerald-600/20"
-  };
+  const v:any={primary:"bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900/20",secondary:"bg-slate-100 text-slate-900 hover:bg-slate-200 focus:ring-slate-300",ghost:"bg-transparent hover:bg-slate-100 text-slate-700 focus:ring-slate-300",danger:"bg-rose-600 text-white hover:bg-rose-500 focus:ring-rose-600/20",outline:"border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 focus:ring-slate-300",success:"bg-emerald-600 text-white hover:bg-emerald-500 focus:ring-emerald-600/20"};
   return <button className={`${base} ${v[variant]} ${className}`} {...p}>{children}</button>;
 };
 const Input = ({className="", ...p}: any) => <input className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 ${className}`} {...p}/>;
@@ -39,7 +25,7 @@ const Badge = ({children, className=""}: any)=><span className={`inline-flex ite
 const Modal=({open,onClose,title,children,wide=false}:any)=>!open?null:(
   <div className="fixed inset-0 z-50 flex items-center justify-center">
     <div className="absolute inset-0 bg-slate-900/50" onClick={onClose}/>
-    <div className={`relative z-10 maxh-[90vh] max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-2xl ${wide?"w-[1080px]":"w-[720px]"}`}>
+    <div className={`relative z-10 max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-2xl ${wide?"w-[1080px]":"w-[720px]"}`}>
       <div className="flex items-center justify-between border-b border-slate-200 p-4">
         <h3 className="text-base font-semibold text-slate-900">{title}</h3>
         <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-slate-100" aria-label="Cerrar">
@@ -66,189 +52,140 @@ function useAuth(){
   return {user,signup,login,logout,getUserData,setUserData};
 }
 
-// ===== Header (menú nuevo) =====
+/* Header */
 function Header({onGoto,user,onOpenContact}:any){
-  return (
-    <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-200">
-      <Container>
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={()=>onGoto("home")}>
-            <img src="/logo.svg" className="h-9 w-9 rounded-lg" alt="logo"/>
-            <span className="hidden text-sm font-semibold text-slate-900 sm:block">Facturakit</span>
-          </div>
-          <nav className="flex items-center gap-2">
-            <Button variant="ghost" onClick={()=>onGoto("templates")} className="hidden sm:inline-flex">Herramientas de facturas</Button>
-            <Button variant="ghost" onClick={()=>onGoto("templates")} className="hidden sm:inline-flex">Plantillas</Button>
-            <Button variant="ghost" onClick={onOpenContact} className="hidden sm:inline-flex">Contacto</Button>
-            {user
-              ? <Button onClick={()=>onGoto("dashboard")} className="bg-emerald-600 hover:bg-emerald-500">Panel</Button>
-              : <Button onClick={()=>onGoto("login")} className="bg-emerald-600 hover:bg-emerald-500">Login</Button>}
-          </nav>
-        </div>
-      </Container>
-    </header>
-  );
+  return (<header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-200">
+    <Container><div className="flex h-16 items-center justify-between">
+      <div className="flex items-center gap-3"><img src="/logo.svg" className="h-9 w-9 rounded-lg" alt="logo"/><span className="hidden text-sm font-semibold text-slate-900 sm:block">Facturakit</span></div>
+      <nav className="flex items-center gap-2">
+        <Button variant="ghost" onClick={()=>onGoto("home")} className="hidden sm:inline-flex">Inicio</Button>
+        <Button variant="ghost" onClick={()=>onGoto("templates")} className="hidden sm:inline-flex">Plantillas</Button>
+        <Button variant="ghost" onClick={onOpenContact} className="hidden sm:inline-flex">Contacto</Button>
+        {user? <Button onClick={()=>onGoto("dashboard")}>Panel</Button> : <><Button variant="secondary" onClick={()=>onGoto("login")}>Entrar</Button><Button onClick={()=>onGoto("signup")}>Crear cuenta</Button></>}
+      </nav>
+    </div></Container>
+  </header>);
 }
 
-/* ---------- Home (landing completa) ---------- */
+/* ---------- Home (completa) ---------- */
 function Home({ onGoto }: any) {
   return (
     <>
-      {/* HERO tipo onlinecv */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#111827] to-[#1f2937]">
-        <div className="absolute inset-0 opacity-[0.06]" style={{backgroundImage:"radial-gradient(#fff 1px, transparent 1px)", backgroundSize:"20px 20px"}}/>
-        <Container className="relative py-16 sm:py-20">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div className="text-white">
-              <p className="text-sm/6 font-semibold text-emerald-300">Facturas online</p>
-              <h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">
-                Tu Factura profesional en <span className="underline decoration-emerald-400 decoration-8 underline-offset-4">segundos</span>
+      {/* HERO */}
+      <section className="bg-gradient-to-b from-slate-50 to-white">
+        <Container className="py-20 sm:py-28">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <img src="/logo.svg" alt="Facturakit" className="h-8 w-8 rounded-md"/>
+                <Badge>V7.4.1</Badge>
+              </div>
+              <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+                Facturas bonitas y profesionales en 2 minutos
               </h1>
-              <p className="mt-4 text-lg text-slate-300">
-                Selecciona una plantilla, edita desde cualquier dispositivo y descárgala en PDF o HTML. Rápido, bonito y sin complicaciones.
+              <p className="mt-4 text-lg text-slate-600">
+                10 plantillas con diseño real, editor completo y exportación a <b>PDF</b> o <b>HTML</b>. Las <b>3 primeras</b> son gratis.
               </p>
-              <ul className="mt-5 space-y-2 text-slate-300 text-sm">
-                <li>• Plantillas reales con estructura y tipografías optimizadas.</li>
-                <li>• Previsualización en vivo con logo, colores, impuestos y descuentos.</li>
-                <li>• 3 facturas gratis sin tarjeta.</li>
-              </ul>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Button onClick={() => onGoto("templates")} className="bg-emerald-500 hover:bg-emerald-400 text-slate-900">Crear factura</Button>
+                <Button onClick={() => onGoto("templates")} variant="success">Crear factura ahora</Button>
                 <Button variant="secondary" onClick={() => onGoto("templates")}>Ver plantillas</Button>
               </div>
-              {/* Trustpilot */}
-              <div className="mt-6 flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2 backdrop-blur">
-                <span className="text-sm text-white/90">Excelente</span>
-                <div className="flex items-center gap-1 text-emerald-400">{Array.from({length:5}).map((_,i)=>(<span key={i}>★</span>))}</div>
-                <span className="text-sm text-white/80">2.074 opiniones en</span>
-                <span className="text-emerald-300 font-semibold">Trustpilot</span>
+              <div className="mt-6 flex items-center gap-4 text-sm text-slate-600">
+                <div className="flex -space-x-2">
+                  {["Ana", "Carlos", "María", "Jorge"].map((n) => (
+                    <div key={n} className="h-8 w-8 rounded-full ring-2 ring-white bg-slate-200 grid place-items-center text-xs font-semibold text-slate-700">
+                      {n.slice(0,1)}
+                    </div>
+                  ))}
+                </div>
+                <span>+1.200 usuarios activos</span>
               </div>
             </div>
-
-            {/* Imagen factura + logos clientes */}
             <div className="relative">
-              <img src="/hero-invoice.svg" alt="Ejemplo de factura" className="w-full rounded-2xl border border-slate-700/40 shadow-2xl"/>
-              <div className="mt-6 rounded-xl bg-white px-4 py-3 shadow-lg">
-                <div className="text-xs font-semibold text-slate-700 flex items-center gap-2">
-                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-slate-100">💼</span>
-                  NUESTROS CLIENTES HAN SIDO CONTRATADOS POR:
-                </div>
-                <div className="mt-3 grid grid-cols-3 gap-4 opacity-80 sm:grid-cols-6 text-slate-500">
-                  {["amazon","Deloitte.","mercadona","Santander","Rappi","Notion"].map((n)=>(<div key={n} className="grid h-7 place-items-center text-[12px] font-semibold">{n}</div>))}
-                </div>
+              <img src="/hero-invoice.svg" alt="Ejemplo de factura" className="w-full rounded-2xl border border-slate-200 shadow-sm"/>
+              <div className="absolute -bottom-4 -left-4 hidden sm:block rounded-xl bg-white p-2 shadow-md">
+                <MiniInvoicePreview templateId="elegant" />
               </div>
             </div>
           </div>
         </Container>
       </section>
 
-      {/* Selección de plantillas (carrusel) */}
+      {/* BENEFICIOS */}
       <section className="bg-white">
         <Container className="py-16">
-          <h2 className="text-center text-2xl font-extrabold tracking-tight text-slate-900">Selecciona la plantilla de tu factura</h2>
-          <p className="mt-2 text-center text-slate-600">Explora estilos clásicos, modernos y artísticos. Todas son personalizables.</p>
-
-          <div className="mt-8 relative">
-            <div className="no-scrollbar flex gap-6 overflow-x-auto pb-2">
-              {TEMPLATES.map(t=>(
-                <div key={t.id} className="w-[280px] shrink-0">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                    <div className="h-48 rounded-lg bg-white">
-                      <div className="scale-[0.75] origin-top-left min-w-[640px] -translate-y-3">
-                        <InvoiceDocByTemplate invoice={{...DEFAULT_SAMPLE, templateId:t.id, color:t.colors[0]}} templateId={t.id} accentColor={t.colors[0]} compact/>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold">{t.name}</p>
-                        <p className="text-xs text-slate-500">{t.vibe}</p>
-                      </div>
-                      <Button onClick={()=>onGoto("templates")} className="h-8 px-3">Usar</Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="pointer-events-none absolute -left-3 top-1/2 hidden -translate-y-1/2 sm:block">
-              <div className="grid h-10 w-10 place-items-center rounded-full bg-slate-900 text-white shadow">‹</div>
-            </div>
-            <div className="pointer-events-none absolute -right-3 top-1/2 hidden -translate-y-1/2 sm:block">
-              <div className="grid h-10 w-10 place-items-center rounded-full bg-slate-900 text-white shadow">›</div>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* Por qué escogernos */}
-      <section className="bg-slate-50">
-        <Container className="py-16">
-          <div className="grid gap-10 lg:grid-cols-2">
-            <div>
-              <h3 className="text-2xl font-bold">¿Por qué escogernos?</h3>
-              <p className="mt-2 text-slate-600">Cuidamos el diseño y la experiencia. Sin registrarte puedes crear 3 facturas y previsualizar todo en tiempo real.</p>
-              <ul className="mt-4 space-y-2 text-slate-700 text-sm">
-                <li>✓ Plantillas con jerarquía tipográfica y espacio consistente</li>
-                <li>✓ Editor con descuentos %, importes, colores y logo</li>
-                <li>✓ Exportación a PDF (print) y HTML</li>
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <MiniInvoicePreview templateId="modern"/>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* Valor Facturakit */}
-      <section className="bg-white">
-        <Container className="py-16">
-          <h3 className="text-center text-2xl font-bold">Facturakit: crea facturas que destaquen y ten el control de tu negocio</h3>
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {[{i:"🧩",t:"Plantillas modulares",d:"Cambia diseño, columnas, cabeceras y totales."},
-              {i:"🎨",t:"Marca propia",d:"Logo y paletas por plantilla."},
-              {i:"⚡",t:"Rápido",d:"Crea y descarga en segundos."}].map(b=>(
-              <div key={b.t} className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
-                <div className="text-4xl">{b.i}</div>
-                <h4 className="mt-3 text-lg font-semibold">{b.t}</h4>
-                <p className="mt-2 text-sm text-slate-600">{b.d}</p>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      {/* 8 ventajas */}
-      <section className="bg-slate-50">
-        <Container className="py-16">
-          <h3 className="text-center text-2xl font-bold">Las 8 ventajas de utilizar Facturakit</h3>
+          <h2 className="text-center text-2xl font-bold">Todo lo que necesitas</h2>
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {[["⚙️","Editor completo"],["📄","10 plantillas"],["🖼️","Logo y colores"],["🧮","Impuestos/Descuentos"],
-              ["🔄","Preview en vivo"],["⬇️","PDF & HTML"],["🔒","Datos locales"],["💬","Soporte por email"]].map(([i,t])=>(
-              <div key={t as string} className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
-                <div className="text-4xl">{i}</div>
-                <p className="mt-3 text-sm font-semibold">{t}</p>
-              </div>
+            {[
+              { t: "Plantillas con diseño real", d: "Cada estilo modifica la estructura, no solo el color." },
+              { t: "Previsualización en vivo", d: "Ve la factura mientras rellenas los datos." },
+              { t: "Logo y paletas", d: "Sube tu logo y elige colores por plantilla." },
+              { t: "Descarga inmediata", d: "Exporta PDF (print) o HTML en 1 clic." },
+            ].map((f) => (
+              <Card key={f.t}><CardBody><h3 className="text-base font-semibold text-slate-900">{f.t}</h3><p className="mt-1 text-sm text-slate-600">{f.d}</p></CardBody></Card>
             ))}
           </div>
         </Container>
       </section>
 
-      {/* Opiniones */}
+      {/* PLANTILLAS */}
+      <section className="bg-slate-50">
+        <Container className="py-16">
+          <div className="flex items-end justify-between">
+            <h2 className="text-2xl font-bold">Plantillas populares</h2>
+            <Button variant="ghost" onClick={() => onGoto("templates")}>Ver todas</Button>
+          </div>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {["minimal","classic","modern","elegant"].map(id => (
+              <Card key={id}>
+                <CardBody>
+                  <MiniInvoicePreview templateId={id}/>
+                  <p className="mt-3 text-sm font-semibold capitalize">{id}</p>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* PASOS */}
+      <section>
+        <Container className="py-16">
+          <h2 className="text-center text-2xl font-bold">Cómo funciona</h2>
+          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+            {["Elige plantilla", "Rellena datos", "Descarga"].map((s, i) => (
+              <Card key={s}><CardBody>
+                <div className="flex items-center gap-3">
+                  <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-900 text-white">{i + 1}</div>
+                  <h3 className="text-base font-semibold text-slate-900">{s}</h3>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">
+                  {i === 0 ? "10 estilos con mini‑previews reales."
+                   : i === 1 ? "Logo, colores, conceptos, impuestos y descuentos."
+                   : "PDF o HTML listos para enviar."}
+                </p>
+              </CardBody></Card>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* TESTIMONIOS */}
       <section className="bg-white">
         <Container className="py-16">
-          <h3 className="text-center text-2xl font-bold">Lo que dicen nuestros clientes</h3>
+          <h2 className="text-center text-2xl font-bold">Opiniones</h2>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {[{n:"Ana López",t:"Diseñadora",m:"Muy fácil y el resultado se ve premium."},
-              {n:"Diego Martín",t:"Autónomo",m:"En 3 minutos tuve mi factura lista."},
-              {n:"Laura Pérez",t:"Consultora",m:"Las plantillas son de nivel profesional."}].map(r=>(
+            {[{ n: "Ana López", t: "Diseñadora", m: "Se ve profesional y es súper rápido." },
+              { n: "Diego Martín", t: "Autónomo", m: "Me ahorra tiempo cada mes." },
+              { n: "Laura Pérez", t: "Consultora", m: "Las plantillas tienen mucho nivel." }].map((r) => (
               <Card key={r.n}><CardBody>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-slate-200 grid place-items-center text-sm font-semibold text-slate-700">
-                    {r.n.split(" ").map(p=>p[0]).join("")}
+                  <div className="h-10 w-10 rounded-full bg-slate-200 grid place-items-center font-semibold text-slate-700">
+                    {r.n.split(" ").map(p => p[0]).join("")}
                   </div>
                   <div><p className="text-sm font-semibold text-slate-900">{r.n}</p><p className="text-xs text-slate-500">{r.t}</p></div>
                 </div>
-                <div className="mt-2 text-amber-500">★★★★★</div>
+                <div className="mt-3 flex items-center gap-1 text-amber-500">{Array.from({length:5}).map((_,i)=>(<span key={i}>★</span>))}</div>
                 <p className="mt-2 text-sm text-slate-700">“{r.m}”</p>
               </CardBody></Card>
             ))}
@@ -256,55 +193,28 @@ function Home({ onGoto }: any) {
         </Container>
       </section>
 
-      {/* FAQ */}
-      <section className="bg-slate-50">
-        <Container className="py-16">
-          <h3 className="text-center text-2xl font-bold">Preguntas frecuentes</h3>
-          <div className="mx-auto mt-6 max-w-3xl space-y-3">
-            {[["¿Necesito registrarme?", "Puedes crear 3 facturas gratis sin tarjeta. Para descargar guardamos tu factura en tu cuenta."],
-              ["¿Puedo cambiar de plantilla después?", "Sí, en el editor puedes cambiar diseño y colores sin perder datos."],
-              ["¿Cómo exporto a PDF?", "Usa “Exportar PDF” en la vista previa (usa la impresión del navegador con colores activados)."]].map(([q,a])=>(
-              <FaqItem key={q as string} q={q} a={a}/>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      {/* Redes + CTA final */}
-      <section className="bg-white">
+      {/* CTA FINAL */}
+      <section className="bg-slate-900">
         <Container className="py-14 text-center">
-          <div className="flex items-center justify-center gap-5 text-2xl text-slate-700"><span>🐦</span><span>📸</span><span>💼</span><span>🌐</span></div>
-          <h4 className="mt-6 text-xl font-semibold">¿Listo para empezar?</h4>
-          <p className="mt-2 text-slate-600">Crea tu primera factura gratis ahora mismo.</p>
-          <Button className="mt-4 bg-emerald-500 hover:bg-emerald-400 text-slate-900" onClick={()=>onGoto("templates")}>Crear factura</Button>
+          <h3 className="text-2xl font-bold text-white">Crea tu primera factura gratis</h3>
+          <p className="mt-2 text-slate-300">Sin tarjetas ni complicaciones: 3 descargas gratuitas.</p>
+          <Button className="mt-4" onClick={() => onGoto("templates")}>Empezar</Button>
         </Container>
       </section>
     </>
   );
 }
 
-/* Templates */
+/* Templates list */
 function Templates({onPick,onPreviewTemplate}:any){
-  return (
-    <Container className="py-12">
-      <h2 className="text-2xl font-bold text-slate-900">Elige una plantilla</h2>
-      <p className="mt-2 text-slate-600">Clásicas, modernas y artísticas. Previsualiza antes de usar.</p>
-      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
-        {TEMPLATES.map(t=>(
-          <Card key={t.id}>
-            <CardHeader title={`${t.name}`} subtitle={t.vibe} right={<Badge>Demo</Badge>}/>
-            <CardBody>
-              <MiniInvoicePreview templateId={t.id}/>
-              <div className="mt-3 flex items-center justify-between gap-2">
-                <Button variant="secondary" onClick={()=>onPreviewTemplate(t)}>Ver ejemplo</Button>
-                <Button onClick={()=>onPick(t)}>Usar</Button>
-              </div>
-            </CardBody>
-          </Card>
-        ))}
-      </div>
-    </Container>
-  );
+  return (<Container className="py-12"><h2 className="text-2xl font-bold text-slate-900">Elige una plantilla</h2><p className="mt-2 text-slate-600">Clásicas, modernas y artísticas. Previsualiza antes de usar.</p>
+    <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
+      {TEMPLATES.map(t=>(<Card key={t.id}><CardHeader title={`${t.name}`} subtitle={t.vibe} right={<Badge>Demo</Badge>}/><CardBody>
+        <MiniInvoicePreview templateId={t.id}/>
+        <div className="mt-3 flex items-center justify-between gap-2"><Button variant="secondary" onClick={()=>onPreviewTemplate(t)}>Ver ejemplo</Button><Button onClick={()=>onPick(t)}>Usar</Button></div>
+      </CardBody></Card>))}
+    </div>
+  </Container>);
 }
 
 /* Builder */
@@ -319,110 +229,61 @@ function Builder({template, initial, onBack, onProceed, auth}:any){
   const onLogo=(e:any)=>{const f=e.target.files?.[0]; if(!f) return; const r=new FileReader(); r.onload=()=>change({logo:r.result}); r.readAsDataURL(f);};
   const totals=useMemo(()=>calcTotals(inv.items, inv.discount, inv.taxRate),[inv.items, inv.discount, inv.taxRate]);
   const proceed=()=>onProceed(inv);
-  return (
-    <Container className="py-8">
-      <div className="mb-6 flex items-center gap-3">
-        <Button variant="secondary" onClick={onBack}>Volver</Button>
-        <Badge>Plantilla: {template?.name}</Badge>
-        <Select className="w-auto" value={inv.templateId} onChange={(e:any)=>change({templateId:e.target.value})}>
-          {TEMPLATES.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
-        </Select>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Datos de la factura" subtitle="Completa todos los campos necesarios"/>
-          <CardBody className="space-y-5">
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs font-medium text-slate-600">Nº factura</label><Input value={inv.number} onChange={(e:any)=>change({number:e.target.value})}/></div>
-              <div><label className="text-xs font-medium text-slate-600">Fecha</label><Input type="date" value={inv.date} onChange={(e:any)=>change({date:e.target.value})}/></div>
-              <div><label className="text-xs font-medium text-slate-600">Vencimiento</label><Input type="date" value={inv.dueDate} onChange={(e:any)=>change({dueDate:e.target.value})}/></div>
-              <div><label className="text-xs font-medium text-slate-600">Pedido/PO</label><Input value={inv.purchaseOrder} onChange={(e:any)=>change({purchaseOrder:e.target.value})}/></div>
-            </div>
-
-            <Card className="border-slate-200">
-              <CardHeader title="Emisor"/>
-              <CardBody className="grid grid-cols-2 gap-3">
-                <Input placeholder="Nombre" value={inv.issuer.name} onChange={(e:any)=>updateIssuer("name",e.target.value)}/>
-                <Input placeholder="NIF/CIF" value={inv.issuer.nif} onChange={(e:any)=>updateIssuer("nif",e.target.value)}/>
-                <Input placeholder="Dirección" value={inv.issuer.address} onChange={(e:any)=>updateIssuer("address",e.target.value)}/>
-                <Input placeholder="Email" value={inv.issuer.email} onChange={(e:any)=>updateIssuer("email",e.target.value)}/>
-                <Input placeholder="Teléfono" value={inv.issuer.phone} onChange={(e:any)=>updateIssuer("phone",e.target.value)}/>
-                <div><label className="text-xs font-medium text-slate-600">Logo</label><Input type="file" accept="image/*" onChange={onLogo}/></div>
-              </CardBody>
-            </Card>
-
-            <Card>
-              <CardHeader title="Cliente"/>
-              <CardBody className="grid grid-cols-2 gap-3">
-                <Input placeholder="Nombre" value={inv.client.name} onChange={(e:any)=>updateClient("name",e.target.value)}/>
-                <Input placeholder="NIF" value={inv.client.nif} onChange={(e:any)=>updateClient("nif",e.target.value)}/>
-                <Input placeholder="Dirección" value={inv.client.address} onChange={(e:any)=>updateClient("address",e.target.value)}/>
-                <Input placeholder="Email" value={inv.client.email} onChange={(e:any)=>updateClient("email",e.target.value)}/>
-              </CardBody>
-            </Card>
-
-            <Card>
-              <CardHeader title="Conceptos" right={<Button variant="secondary" onClick={addItem}>Añadir</Button>}/>
-              <CardBody className="space-y-3">
-                {inv.items.map((it:any)=>(
-                  <div key={it.id} className="grid grid-cols-12 items-center gap-2">
-                    <Input className="col-span-6" value={it.description} onChange={(e:any)=>updateItem(it.id,{description:e.target.value})}/>
-                    <Input className="col-span-2" type="number" min="0" step="1" value={it.qty} onChange={(e:any)=>updateItem(it.id,{qty:Number(e.target.value)})}/>
-                    <Input className="col-span-3" type="number" min="0" step="0.01" value={it.price} onChange={(e:any)=>updateItem(it.id,{price:Number(e.target.value)})}/>
-                    <button className="col-span-1 rounded-lg p-2 text-rose-600 hover:bg-rose-50" onClick={()=>removeItem(it.id)} aria-label="Eliminar">×</button>
-                  </div>
-                ))}
-              </CardBody>
-            </Card>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs font-medium text-slate-600">Impuestos (%)</label><Input type="number" min="0" step="0.1" value={inv.taxRate} onChange={(e:any)=>change({taxRate:Number(e.target.value)})}/></div>
-              <div className="grid grid-cols-2 gap-2">
-                <Select value={inv.discount.mode} onChange={(e:any)=>change({discount:{...inv.discount,mode:e.target.value}})}>
-                  <option value="percent">Descuento %</option>
-                  <option value="amount">Descuento €</option>
-                </Select>
-                <Input type="number" min="0" step="0.01" value={inv.discount.value} onChange={(e:any)=>change({discount:{...inv.discount,value:Number(e.target.value)}})}/>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs font-medium text-slate-600">Método de pago</label><Input value={inv.paymentMethod} onChange={(e:any)=>change({paymentMethod:e.target.value})}/></div>
-              <div><label className="text-xs font-medium text-slate-600">IBAN / Banco</label><Input value={inv.bankIban} onChange={(e:any)=>change({bankIban:e.target.value})}/></div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-medium text-slate-600">Color de acento</label>
-                <div className="flex flex-wrap gap-2">
-                  {(TEMPLATES.find(x=>x.id===inv.templateId)?.colors||[]).map((c:string)=>(
-                    <button key={c} className={`h-8 w-8 rounded-full ring-2 ${inv.color===c?"ring-slate-900":"ring-transparent"}`} style={{background:c}} onClick={()=>change({color:c})} type="button"/>
-                  ))}
-                </div>
-              </div>
-              <div/>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-xs font-medium text-slate-600">Notas</label><Textarea rows={3} value={inv.notes} onChange={(e:any)=>change({notes:e.target.value})}/></div>
-              <div><label className="text-xs font-medium text-slate-600">Términos</label><Textarea rows={3} value={inv.terms} onChange={(e:any)=>change({terms:e.target.value})}/></div>
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={onBack}>Atrás</Button>
-              <Button onClick={proceed}>Descargar factura</Button>
-            </div>
-          </CardBody>
-        </Card>
-
-        <div className="space-y-3">
-          <Card><CardHeader title="Previsualización" subtitle="Actualiza en tiempo real"/><CardBody><InvoiceDocByTemplate invoice={inv} accentColor={inv.color} templateId={inv.templateId}/></CardBody></Card>
-          <Card><CardHeader title="Totales"/><CardBody><TotalsView totals={totals}/></CardBody></Card>
+  return (<Container className="py-8">
+    <div className="mb-6 flex items-center gap-3"><Button variant="secondary" onClick={onBack}>Volver</Button><Badge>Plantilla: {template?.name}</Badge>
+      <Select className="w-auto" value={inv.templateId} onChange={(e:any)=>change({templateId:e.target.value})}>{TEMPLATES.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</Select>
+    </div>
+    <div className="grid gap-6 lg:grid-cols-2">
+      <Card><CardHeader title="Datos de la factura" subtitle="Completa todos los campos necesarios"/><CardBody className="space-y-5">
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="text-xs font-medium text-slate-600">Nº factura</label><Input value={inv.number} onChange={(e:any)=>change({number:e.target.value})}/></div>
+          <div><label className="text-xs font-medium text-slate-600">Fecha</label><Input type="date" value={inv.date} onChange={(e:any)=>change({date:e.target.value})}/></div>
+          <div><label className="text-xs font-medium text-slate-600">Vencimiento</label><Input type="date" value={inv.dueDate} onChange={(e:any)=>change({dueDate:e.target.value})}/></div>
+          <div><label className="text-xs font-medium text-slate-600">Pedido/PO</label><Input value={inv.purchaseOrder} onChange={(e:any)=>change({purchaseOrder:e.target.value})}/></div>
         </div>
+        <Card className="border-slate-200"><CardHeader title="Emisor"/><CardBody className="grid grid-cols-2 gap-3">
+          <Input placeholder="Nombre" value={inv.issuer.name} onChange={(e:any)=>updateIssuer("name",e.target.value)}/>
+          <Input placeholder="NIF/CIF" value={inv.issuer.nif} onChange={(e:any)=>updateIssuer("nif",e.target.value)}/>
+          <Input placeholder="Dirección" value={inv.issuer.address} onChange={(e:any)=>updateIssuer("address",e.target.value)}/>
+          <Input placeholder="Email" value={inv.issuer.email} onChange={(e:any)=>updateIssuer("email",e.target.value)}/>
+          <Input placeholder="Teléfono" value={inv.issuer.phone} onChange={(e:any)=>updateIssuer("phone",e.target.value)}/>
+          <div><label className="text-xs font-medium text-slate-600">Logo</label><Input type="file" accept="image/*" onChange={onLogo}/></div>
+        </CardBody></Card>
+        <Card><CardHeader title="Cliente"/><CardBody className="grid grid-cols-2 gap-3">
+          <Input placeholder="Nombre" value={inv.client.name} onChange={(e:any)=>updateClient("name",e.target.value)}/>
+          <Input placeholder="NIF" value={inv.client.nif} onChange={(e:any)=>updateClient("nif",e.target.value)}/>
+          <Input placeholder="Dirección" value={inv.client.address} onChange={(e:any)=>updateClient("address",e.target.value)}/>
+          <Input placeholder="Email" value={inv.client.email} onChange={(e:any)=>updateClient("email",e.target.value)}/>
+        </CardBody></Card>
+        <Card><CardHeader title="Conceptos" right={<Button variant="secondary" onClick={addItem}>Añadir</Button>}/><CardBody className="space-y-3">
+          {inv.items.map((it:any)=>(<div key={it.id} className="grid grid-cols-12 items-center gap-2">
+            <Input className="col-span-6" value={it.description} onChange={(e:any)=>updateItem(it.id,{description:e.target.value})}/>
+            <Input className="col-span-2" type="number" min="0" step="1" value={it.qty} onChange={(e:any)=>updateItem(it.id,{qty:Number(e.target.value)})}/>
+            <Input className="col-span-3" type="number" min="0" step="0.01" value={it.price} onChange={(e:any)=>updateItem(it.id,{price:Number(e.target.value)})}/>
+            <button className="col-span-1 rounded-lg p-2 text-rose-600 hover:bg-rose-50" onClick={()=>removeItem(it.id)} aria-label="Eliminar">×</button>
+          </div>))}
+        </CardBody></Card>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="text-xs font-medium text-slate-600">Impuestos (%)</label><Input type="number" min="0" step="0.1" value={inv.taxRate} onChange={(e:any)=>change({taxRate:Number(e.target.value)})}/></div>
+          <div className="grid grid-cols-2 gap-2"><Select value={inv.discount.mode} onChange={(e:any)=>change({discount:{...inv.discount,mode:e.target.value}})}><option value="percent">Descuento %</option><option value="amount">Descuento €</option></Select><Input type="number" min="0" step="0.01" value={inv.discount.value} onChange={(e:any)=>change({discount:{...inv.discount,value:Number(e.target.value)}})}/></div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="text-xs font-medium text-slate-600">Método de pago</label><Input value={inv.paymentMethod} onChange={(e:any)=>change({paymentMethod:e.target.value})}/></div>
+          <div><label className="text-xs font-medium text-slate-600">IBAN / Banco</label><Input value={inv.bankIban} onChange={(e:any)=>change({bankIban:e.target.value})}/></div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div><label className="text-xs font-medium text-slate-600">Color de acento</label><div className="flex flex-wrap gap-2">{(TEMPLATES.find(x=>x.id===inv.templateId)?.colors||[]).map((c:string)=>(<button key={c} className={`h-8 w-8 rounded-full ring-2 ${inv.color===c?"ring-slate-900":"ring-transparent"}`} style={{background:c}} onClick={()=>change({color:c})} type="button"/>))}</div></div>
+          <div/>
+        </div>
+        <div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-medium text-slate-600">Notas</label><Textarea rows={3} value={inv.notes} onChange={(e:any)=>change({notes:e.target.value})}/></div><div><label className="text-xs font-medium text-slate-600">Términos</label><Textarea rows={3} value={inv.terms} onChange={(e:any)=>change({terms:e.target.value})}/></div></div>
+        <div className="flex justify-end gap-3"><Button variant="secondary" onClick={onBack}>Atrás</Button><Button onClick={proceed}>Descargar factura</Button></div>
+      </CardBody></Card>
+      <div className="space-y-3">
+        <Card><CardHeader title="Previsualización" subtitle="Actualiza en tiempo real"/><CardBody><InvoiceDocByTemplate invoice={inv} accentColor={inv.color} templateId={inv.templateId}/></CardBody></Card>
+        <Card><CardHeader title="Totales"/><CardBody><TotalsView totals={totals}/></CardBody></Card>
       </div>
-    </Container>
-  );
+    </div>
+  </Container>);
 }
 const TotalsView=({totals}:any)=>(<div className="space-y-1 text-sm">
   <div className="flex justify-between"><span className="text-slate-600">Subtotal</span><span className="font-medium">{currency(totals.subtotal)}</span></div>
